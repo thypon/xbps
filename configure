@@ -9,6 +9,7 @@ BUILD=
 HOST=
 TARGET=
 DEBUG=
+SANITIZE=
 BUILD_TESTS=
 BUILD_API_DOCS=
 BUILD_STATIC=
@@ -41,6 +42,7 @@ for instance \`--prefix=\$HOME'.
 --verbose 		Disable silent build to see compilation details
 --enable-api-docs 	Install XBPS API Library documentation (default disabled)
 --enable-debug		Build with debugging code and symbols (default disabled)
+--enable-sanitizers	Build with sanitizers on (default disabled)
 --enable-fulldebug	Enables extra debugging code (default disabled)
 --enable-static 	Build XBPS static utils (default disabled)
 --enable-tests		Build and install Kyua tests (default disabled)
@@ -54,6 +56,7 @@ for x; do
 	var=${x#*=}
 	case "$opt" in
 	--enable-debug) DEBUG=yes;;
+	--enable-sanitizers) SANITIZE=yes DEBUG=yes;;
 	--enable-fulldebug) FULL_DEBUG=yes;;
 	--prefix) PREFIX=$var;;
 	--exec-prefix) EPREFIX=$var;;
@@ -162,6 +165,8 @@ echo "ETCDIR ?= $ETCDIR" >>$CONFIG_MK
 
 [ -z "$DEBUG" ] && DEBUG=no
 
+[ -z "$SANITIZE" ] && SANITIZE=no
+
 if [ -z "$CC" ]; then
 	printf "Looking for compiler ... "
 	for b in $TARGET- ""; do
@@ -209,6 +214,13 @@ fi
 if [ -n "$FULL_DEBUG" ]; then
 	echo "Enabling extra debugging code."
 	echo "CPPFLAGS+= -DFULL_DEBUG" >>$CONFIG_MK
+fi
+
+if [ -n "$SANITIZE" -a "$SANITIZE" != no -a "$SANITIZE" != false ]; then
+	echo "Building with sanitizers."
+	echo "CFLAGS+= -fsanitize=address,undefined -fsanitize-recover=address,undefined -Wformat -Werror=format-security -Werror=array-bounds -g" >>$CONFIG_MK
+	echo "CXXFLAGS+= -fsanitize=address,undefined -fsanitize-recover=address,undefined -Wformat -Werror=format-security -Werror=array-bounds -g" >>$CONFIG_MK
+	echo "LDFLAGS+= -fsanitize=address,undefined -fsanitize-recover=address,undefined" >>$CONFIG_MK
 fi
 
 case "$OS" in

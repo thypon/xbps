@@ -4,7 +4,8 @@ for f in bin/*; do
 	export PATH=$PWD/$f:$PATH
 done
 export PATH=$PATH:/usr/local/bin
-export LD_PRELOAD=$PWD/lib/libxbps.so
+export LD_PRELOAD="/usr/lib/libasan.so.4 /usr/lib/libubsan.so.0 $PWD/lib/libxbps.so"
+export ASAN_OPTIONS="halt_on_error=0 detect_leaks=0"
 
 kyua test -r result.db -k tests/xbps/Kyuafile
 rv=$?
